@@ -17,6 +17,7 @@
 
 package com.velocitypowered.proxy.server;
 
+import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
@@ -24,9 +25,9 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.Handshake;
-import com.velocitypowered.proxy.protocol.packet.StatusRequest;
-import com.velocitypowered.proxy.protocol.packet.StatusResponse;
+import com.velocitypowered.proxy.protocol.packet.HandshakePacket;
+import com.velocitypowered.proxy.protocol.packet.StatusRequestPacket;
+import com.velocitypowered.proxy.protocol.packet.StatusResponsePacket;
 import io.netty.channel.EventLoop;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -53,8 +54,8 @@ public class PingSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void activated() {
-    Handshake handshake = new Handshake();
-    handshake.setNextStatus(StateRegistry.STATUS_ID);
+    HandshakePacket handshake = new HandshakePacket();
+    handshake.setIntent(HandshakeIntent.STATUS);
     handshake.setServerAddress(server.getServerInfo().getAddress().getHostString());
     handshake.setPort(server.getServerInfo().getAddress().getPort());
     handshake.setProtocolVersion(version);
@@ -62,13 +63,13 @@ public class PingSessionHandler implements MinecraftSessionHandler {
 
     connection.setActiveSessionHandler(StateRegistry.STATUS);
     connection.setState(StateRegistry.STATUS);
-    connection.delayedWrite(StatusRequest.INSTANCE);
+    connection.delayedWrite(StatusRequestPacket.INSTANCE);
 
     connection.flush();
   }
 
   @Override
-  public boolean handle(StatusResponse packet) {
+  public boolean handle(StatusResponsePacket packet) {
     // All good!
     completed = true;
     connection.close(true);
